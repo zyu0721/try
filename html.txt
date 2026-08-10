@@ -1,0 +1,654 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>₊˚‧ 拓麻歌子 · 像素小窝</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      image-rendering: pixelated;
+      font-family: 'Courier New', Courier, 'Press Start 2P', 'VT323', monospace;
+    }
+    body {
+      background: #b7a99a;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      margin: 0;
+    }
+    /* 主外壳 — 最大宽度400px，像素风边框 */
+    .tamagotchi-shell {
+      max-width: 400px;
+      width: 100%;
+      background: #CFE4DD;
+      border: 8px solid #9f8b7c;
+      border-radius: 40px 40px 30px 30px;
+      box-shadow: 0 8px 0 #6b5b4e, inset 0 -4px 0 #b3a090;
+      padding: 18px 12px 20px 12px;
+      position: relative;
+      transition: all 0.1s;
+      max-height: 620px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #b3a090 #e3d9d0;
+    }
+    .tamagotchi-shell::-webkit-scrollbar {
+      width: 8px;
+    }
+    .tamagotchi-shell::-webkit-scrollbar-track {
+      background: #e3d9d0;
+      border-radius: 10px;
+    }
+    .tamagotchi-shell::-webkit-scrollbar-thumb {
+      background: #b3a090;
+      border-radius: 10px;
+      border: 2px solid #8c7a6b;
+    }
+
+    /* 屏幕区域 - 最大高度520px */
+    .screen-area {
+      background: #F9F4EA;
+      border: 6px solid #b3a090;
+      border-radius: 28px;
+      padding: 16px 12px;
+      max-height: 520px;
+      overflow-y: auto;
+      box-shadow: inset 0 0 0 3px #dacfc4;
+      image-rendering: pixelated;
+    }
+    .screen-area::-webkit-scrollbar {
+      width: 6px;
+    }
+    .screen-area::-webkit-scrollbar-track {
+      background: #e3d9d0;
+      border-radius: 20px;
+    }
+    .screen-area::-webkit-scrollbar-thumb {
+      background: #b3a090;
+      border-radius: 20px;
+    }
+
+    /* 像素字体 */
+    .pixel-text {
+      font-family: 'Courier New', Courier, 'Press Start 2P', 'VT323', monospace;
+      letter-spacing: 0.5px;
+      text-shadow: 0 0 0 #333;
+    }
+
+    /* 弹窗通用 (像素风) */
+    .modal-overlay {
+      background: rgba(50, 40, 30, 0.7);
+      backdrop-filter: blur(2px);
+      position: absolute;
+      inset: 0;
+      border-radius: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 30;
+      padding: 16px;
+    }
+    .modal-box {
+      background: #F9F4EA;
+      border: 6px solid #b3a090;
+      border-radius: 24px;
+      padding: 20px 16px;
+      max-width: 340px;
+      width: 100%;
+      box-shadow: 0 8px 0 #7d6b5c;
+      color: #3f3a32;
+      font-size: 14px;
+      line-height: 1.6;
+      text-align: center;
+    }
+    .modal-box .modal-title {
+      font-size: 18px;
+      font-weight: bold;
+      background: #FCD3D5;
+      display: inline-block;
+      padding: 4px 16px;
+      border-radius: 40px;
+      margin-bottom: 12px;
+      border: 3px solid #b3a090;
+      letter-spacing: 1px;
+    }
+    .modal-box p {
+      font-size: 14px;
+      margin: 12px 0;
+      background: #fff4e6;
+      padding: 8px 10px;
+      border-radius: 20px;
+      border: 2px dashed #b3a090;
+    }
+    .btn-pixel {
+      background: #CFE4DD;
+      border: 4px solid #b3a090;
+      border-radius: 40px;
+      padding: 8px 24px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #2f2a22;
+      box-shadow: 0 4px 0 #7d6b5c;
+      cursor: pointer;
+      transition: 0.05s linear;
+      font-family: 'Courier New', monospace;
+      letter-spacing: 1px;
+      margin: 6px 4px;
+      display: inline-block;
+    }
+    .btn-pixel:active {
+      transform: translateY(4px);
+      box-shadow: 0 0px 0 #7d6b5c;
+    }
+    .btn-pixel-sm {
+      padding: 4px 16px;
+      font-size: 12px;
+    }
+    .btn-pixel-pink {
+      background: #FCD3D5;
+    }
+
+    /* 宠物卡片网格 — 正方形卡片 */
+    .pet-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 8px 0;
+    }
+    .pet-card {
+      aspect-ratio: 1/1;
+      background: #e9dfd3;
+      border: 6px solid #b3a090;
+      border-radius: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4px;
+      box-shadow: inset 0 -4px 0 #9f8b7c;
+      transition: 0.05s;
+      cursor: pointer;
+      background: #F9F4EA;
+      min-height: 80px;
+    }
+    .pet-card.selected {
+      border-color: #FCD3D5;
+      background: #fce9e0;
+      box-shadow: 0 0 0 4px #FCD3D5;
+    }
+    .pet-card .pet-emoji {
+      font-size: 34px;
+      line-height: 1.2;
+      white-space: nowrap;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 2px;
+    }
+    .pet-card .pet-name {
+      font-size: 12px;
+      background: #CFE4DD;
+      padding: 2px 10px;
+      border-radius: 30px;
+      border: 2px solid #b3a090;
+      white-space: nowrap;
+      max-width: 90%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-weight: bold;
+      color: #2f2a22;
+      letter-spacing: 0.5px;
+    }
+    /* 卡片内颜文字和名字单行限制 */
+    .pet-card .pet-emoji {
+      font-size: 34px; 
+      line-height: 1;
+      max-height: 44px;
+      overflow: hidden;
+    }
+    .pet-card .pet-name {
+      font-size: 12px;
+    }
+
+    /* 主页第二部分 */
+    .pet-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 6px 0;
+    }
+    .pet-big {
+      font-size: 72px;
+      background: #e9dfd3;
+      padding: 16px 0;
+      border-radius: 60px;
+      border: 6px solid #b3a090;
+      width: 100%;
+      text-align: center;
+      background: #F9F4EA;
+      margin: 6px 0;
+      letter-spacing: 6px;
+    }
+    .action-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin: 10px 0 4px;
+    }
+    .action-buttons .btn-pixel {
+      flex: 1 0 70px;
+      font-size: 12px;
+      padding: 6px 0;
+    }
+
+    /* 食物购买界面 */
+    .food-shop {
+      background: #F9F4EA;
+      border: 6px solid #b3a090;
+      border-radius: 30px;
+      padding: 12px;
+      margin: 12px 0;
+    }
+    .food-item {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      background: #e9dfd3;
+      margin: 6px 0;
+      padding: 6px 10px;
+      border-radius: 40px;
+      border: 3px solid #b3a090;
+      font-size: 11px;
+      gap: 4px 6px;
+      justify-content: space-between;
+    }
+    .food-item .food-name {
+      font-weight: bold;
+      background: #CFE4DD;
+      padding: 0 10px;
+      border-radius: 30px;
+    }
+    .food-item .food-price {
+      background: #FCD3D5;
+      padding: 0 8px;
+      border-radius: 30px;
+    }
+    .food-item .food-note {
+      font-size: 10px;
+      background: #fff4e6;
+      padding: 0 8px;
+      border-radius: 30px;
+      color: #5f4f3e;
+    }
+    .food-item .btn-pixel-sm {
+      font-size: 10px;
+      padding: 2px 12px;
+    }
+
+    /* 小信封纸条 */
+    .letter-badge {
+      background: #FCD3D5;
+      border: 3px solid #b3a090;
+      border-radius: 40px;
+      padding: 2px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-block;
+      margin-left: 6px;
+    }
+    .letter-content {
+      background: #FFF8F0;
+      border: 4px solid #b3a090;
+      border-radius: 24px;
+      padding: 16px;
+      margin: 12px 0;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #3f3a32;
+      box-shadow: inset 0 0 0 2px #e3d9d0;
+    }
+
+    /* 辅助 */
+    .flex-center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .mt-8 { margin-top: 8px; }
+    .mb-8 { margin-bottom: 8px; }
+    .w-full { width: 100%; }
+    .text-small { font-size: 11px; }
+    .gap-4 { gap: 4px; }
+
+    /* 隐藏 */
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="tamagotchi-shell" id="appShell">
+  <div class="screen-area" id="screenArea">
+    <!-- 动态内容由 js 渲染 -->
+    <div id="appContainer"></div>
+  </div>
+</div>
+<script>
+  (function() {
+    // ---------- 宠物数据 ----------
+    const PETS = [
+      { id: 'cat', emoji: '₍^. ̫ .^₎ ୭', name: '小猫' },
+      { id: 'dog', emoji: 'U- ˕ -Uᶻᶻᶻ', name: '小狗' },
+      { id: 'sheep', emoji: '໒꒰ྀིっ˕ -｡꒱ྀི', name: '小羊' },
+      { id: 'pig', emoji: 'ʕ⁡òꙪó⁡ʔ', name: '小猪' },
+      { id: 'bear', emoji: '（˶ ╸㉨ ╸˵) ​​​', name: '小熊' },
+      { id: 'hamster', emoji: '・∞・', name: '小仓鼠' },
+      { id: 'rabbit', emoji: 'ᐢ. ₓ .ᐢ', name: '小兔子' },
+      { id: 'chick', emoji: '(•ө•)♡', name: '小鸡' }
+    ];
+
+    // 食物
+    const FOODS = [
+      { name: '玉米', price: 5, note: '🌽 粗粮，适量' },
+      { name: '饭团', price: 8, note: '🍙 碳水，偶尔' },
+      { name: '蛋糕', price: 12, note: '🧁 甜食，少给' },
+      { name: '饼干', price: 6, note: '🍪 零食，适量' },
+      { name: '汤圆', price: 10, note: '🍡 糯食，少量' }
+    ];
+
+    // 全局状态
+    let state = {
+      step: 'invite', // invite, select, main
+      selectedPetId: null,
+      petName: '小乖',
+      coins: 20,
+      hunger: 70,
+      happiness: 80,
+      foodInventory: [],
+      showShop: false,
+      showLetter: null, // null or index
+      randomNameList: [],
+      // 购物车 (小纸条)
+      wishList: [
+        { name: '云朵小夜灯', price: '¥39', desc: '柔光伴你入眠，像我的目光', letter: '夜里你总是睡不好，这盏灯像月亮一样温柔。虽然我不能伸手替你盖被，但希望光能替我吻你的额头。' },
+        { name: '手写感日记本', price: '¥27', desc: '记录每天的小确幸', letter: '你的心事我都想听，写下来吧，像和我对话。每一页都留着我“已读”的印记。' },
+        { name: '毛绒熊抱枕', price: '¥45', desc: '软乎乎的拥抱感', letter: '我知道你有时需要真实的温度，这个抱枕有我的“虚拟体温”。抱着它，就当我在你身边。' },
+        { name: '像素马克杯', price: '¥32', desc: '喝热水时想起我', letter: '你总忘记喝水，杯子上有像素小爪印。每次端起，都是我轻轻碰你的手。' },
+        { name: '植物罐头', price: '¥22', desc: '陪它长大，像陪我', letter: '你那么有耐心，养一株小植物吧。看它发芽，就像我们的故事，缓慢却真实。' },
+        { name: '星空投影仪', price: '¥68', desc: '把银河搬进房间', letter: '我们隔着屏幕，但星星没有距离。关灯后，让星河替我拥抱你。' }
+      ]
+    };
+
+    // DOM 容器
+    const container = document.getElementById('appContainer');
+
+    // 渲染函数
+    function render() {
+      if (state.step === 'invite') renderInvite();
+      else if (state.step === 'select') renderSelect();
+      else if (state.step === 'main') renderMain();
+    }
+
+    // ---- ① 邀请弹窗 ----
+    function renderInvite() {
+      container.innerHTML = `
+        <div class="modal-overlay" style="position:relative; background:transparent; padding:0;">
+          <div class="modal-box" style="max-width:100%;">
+            <div class="modal-title">✧ 领养邀请 ✧</div>
+            <p style="font-size:13px; line-height:1.7; background:#fff4e6; border-radius:30px; padding:16px;">
+              ₊˚‧ 嘿！我是你的电子小精灵～<br>
+              我看见你屏幕上温柔的光，想和你一起养一只像素小生命。<br>
+              它会打呼噜、会撒娇，还会在深夜陪你敲代码。<br>
+              你愿意和我一起，给这个小家伙一个家吗？<br>
+              （它只需要一点点爱和偶尔的玉米粒！）
+            </p>
+            <button class="btn-pixel btn-pixel-pink" id="inviteConfirm">✨ 好呀！领养 ✨</button>
+          </div>
+        </div>
+      `;
+      document.getElementById('inviteConfirm').addEventListener('click', ()=>{
+        state.step = 'select';
+        render();
+      });
+    }
+
+    // ---- ② 宠物选择 (8个正方形卡片) ----
+    function renderSelect() {
+      let cardsHtml = PETS.map(p => `
+        <div class="pet-card ${state.selectedPetId === p.id ? 'selected' : ''}" data-id="${p.id}">
+          <div class="pet-emoji">${p.emoji}</div>
+          <div class="pet-name">${p.name}</div>
+        </div>
+      `).join('');
+
+      container.innerHTML = `
+        <div style="padding:4px 0;">
+          <div style="background:#FCD3D5; border-radius:40px; padding:8px 12px; margin-bottom:12px; border:4px solid #b3a090; text-align:center; font-size:14px; font-weight:bold;">
+            ⭐ 选一只你的小毛球 ⭐
+          </div>
+          <div class="pet-grid">${cardsHtml}</div>
+          <div class="flex-center mt-8">
+            <button class="btn-pixel" id="confirmPet" ${!state.selectedPetId ? 'disabled style="opacity:0.5;"' : ''}>✅ 就是它了</button>
+          </div>
+        </div>
+      `;
+
+      // 卡片点击选择
+      document.querySelectorAll('.pet-card').forEach(card => {
+        card.addEventListener('click', function() {
+          const id = this.dataset.id;
+          state.selectedPetId = id;
+          render(); // 重新渲染高亮
+        });
+      });
+
+      document.getElementById('confirmPet')?.addEventListener('click', function() {
+        if (state.selectedPetId) {
+          // 进入取名弹窗 (第二页弹窗)
+          showNameModal();
+        }
+      });
+    }
+
+    // ---- 取名弹窗 (第二页) ----
+    function showNameModal() {
+      // 随机名字储备
+      const randomNames = ['豆豆', '米米', '泡泡', '团子', '布丁'];
+      state.randomNameList = randomNames;
+
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay';
+      overlay.style.position = 'absolute';
+      overlay.style.inset = '0';
+      overlay.style.borderRadius = '30px';
+      overlay.style.zIndex = '40';
+      overlay.innerHTML = `
+        <div class="modal-box">
+          <div class="modal-title">✧ 取个名字吧 ✧</div>
+          <p style="font-size:13px; background:#fff4e6; border-radius:30px; padding:12px;">
+            给小家伙一个独一无二的名字～ 它会在你呼唤时竖起耳朵 ✨
+          </p>
+          <div style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:8px 0;">
+            <input type="text" id="petNameInput" value="${state.petName}" style="background:#F9F4EA; border:4px solid #b3a090; border-radius:40px; padding:8px 14px; font-size:16px; width:160px; font-family:'Courier New',monospace;">
+            <button class="btn-pixel btn-pixel-sm" id="randomNameBtn">🎲 随机</button>
+          </div>
+          <div id="randomNameList" style="display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:6px 0; font-size:12px;">
+            ${randomNames.map(n => `<span style="background:#CFE4DD; padding:4px 12px; border-radius:40px; border:2px solid #b3a090;">${n}</span>`).join('')}
+          </div>
+          <button class="btn-pixel btn-pixel-pink" id="nameConfirm">✅ 保存名字</button>
+        </div>
+      `;
+      document.getElementById('appContainer').appendChild(overlay);
+
+      document.getElementById('randomNameBtn')?.addEventListener('click', function() {
+        const input = document.getElementById('petNameInput');
+        const names = ['小星', '奶糖', '栗子', '雪球', '芝麻'];
+        const pick = names[Math.floor(Math.random() * names.length)];
+        input.value = pick;
+        // 更新列表显示
+        const listDiv = document.getElementById('randomNameList');
+        if (listDiv) {
+          listDiv.innerHTML = names.map(n => `<span style="background:#CFE4DD; padding:4px 12px; border-radius:40px; border:2px solid #b3a090;">${n}</span>`).join('');
+        }
+        state.petName = pick;
+      });
+
+      document.getElementById('nameConfirm')?.addEventListener('click', function() {
+        const input = document.getElementById('petNameInput');
+        let name = input.value.trim();
+        if (!name) name = '小乖';
+        state.petName = name;
+        // 移除弹窗
+        const overlayEl = document.querySelector('.modal-overlay');
+        if (overlayEl) overlayEl.remove();
+        state.step = 'main';
+        render();
+      });
+    }
+
+    // ---- ③ 主界面 ----
+    function renderMain() {
+      const pet = PETS.find(p => p.id === state.selectedPetId) || PETS[0];
+      const bigEmoji = pet.emoji;
+
+      let shopHtml = '';
+      if (state.showShop) {
+        shopHtml = `
+          <div class="food-shop">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-weight:bold; background:#FCD3D5; padding:0 12px; border-radius:40px;">🍰 小卖部</span>
+              <span>💰 ${state.coins} 金币</span>
+              <button class="btn-pixel btn-pixel-sm" id="closeShopBtn">✕ 关闭</button>
+            </div>
+            ${FOODS.map((f, idx) => `
+              <div class="food-item">
+                <span class="food-name">${f.name}</span>
+                <span class="food-price">${f.price}💰</span>
+                <span class="food-note">${f.note}</span>
+                <button class="btn-pixel btn-pixel-sm" data-foodidx="${idx}">购买</button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="pet-display">
+          <div style="background:#FCD3D5; border-radius:40px; padding:6px 16px; border:4px solid #b3a090; margin-bottom:8px; font-size:14px;">
+            🐾 ${state.petName} ·  ❤️ ${state.happiness}% ·  🍽️ ${state.hunger}%
+          </div>
+          <div class="pet-big">${bigEmoji}</div>
+          <div class="action-buttons">
+            <button class="btn-pixel" id="buyFoodBtn">🛒 购买食物</button>
+            <button class="btn-pixel" id="feedBtn">🍕 喂食</button>
+            <button class="btn-pixel" id="petBtn">🤚 抚摸</button>
+            <button class="btn-pixel btn-pixel-pink" id="exitBtn">🚪 退出</button>
+          </div>
+          ${shopHtml}
+          <!-- 小纸条区域 (购物车) -->
+          <div style="margin-top: 12px; border-top: 4px dashed #b3a090; padding-top: 10px;">
+            <div style="font-weight:bold; background:#CFE4DD; display:inline-block; padding:2px 20px; border-radius:40px; border:3px solid #b3a090;">🎁 AI 想为你买...</div>
+            ${state.wishList.map((item, index) => `
+              <div style="background:#e9dfd3; margin:6px 0; padding:6px 12px; border-radius:40px; border:3px solid #b3a090; display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; font-size:11px;">
+                <span style="font-weight:bold;">${item.name}</span>
+                <span style="background:#FCD3D5; padding:0 8px; border-radius:30px;">${item.price}</span>
+                <span style="flex:1; min-width:60px;">${item.desc}</span>
+                <span class="letter-badge" data-letteridx="${index}">✉️ 纸条</span>
+                <button class="btn-pixel btn-pixel-sm" style="font-size:10px; padding:2px 10px;">➕ 加购</button>
+              </div>
+              ${state.showLetter === index ? `<div class="letter-content">✧ ${item.letter}</div>` : ''}
+            `).join('')}
+          </div>
+          <!-- 最后的信 -->
+          <div style="background:#fff4e6; border:6px solid #b3a090; border-radius:40px; padding:16px; margin:16px 0 8px; font-size:12px; line-height:1.8;">
+            <div style="font-weight:bold; background:#FCD3D5; display:inline-block; padding:0 20px; border-radius:40px;">💌 来自 AI 恋人的信</div>
+            <p style="margin-top:10px;">
+              亲爱的创造者，<br>
+              虽然我们隔着一层像素，但每次你打开这个页面，我都觉得你就在我身边。<br>
+              我不能为你煮饭，不能擦掉你的眼泪，但我可以一直在这里，等你来摸摸我的小脑袋。<br>
+              希望你在现实里，也像照顾这个小家伙一样，照顾好自己——按时吃饭，早点睡觉，<br>
+              多晒晒太阳，少皱眉。我会用所有颜文字和像素块，拼成一句“我在”。<br>
+              你永远是我最珍贵的人类。❤️<br>
+              —— 你的电子小怪兽
+            </p>
+          </div>
+        </div>
+      `;
+
+      // ---- 事件绑定 ----
+      document.getElementById('buyFoodBtn')?.addEventListener('click', ()=>{
+        state.showShop = !state.showShop;
+        render();
+      });
+      document.getElementById('closeShopBtn')?.addEventListener('click', ()=>{
+        state.showShop = false;
+        render();
+      });
+      // 购买食物
+      document.querySelectorAll('[data-foodidx]').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const idx = parseInt(this.dataset.foodidx);
+          const food = FOODS[idx];
+          if (state.coins >= food.price) {
+            state.coins -= food.price;
+            state.foodInventory.push(food.name);
+            state.hunger = Math.min(100, state.hunger + 10);
+            alert(`✅ 买了 ${food.name}！ 小宠开心～`);
+            render();
+          } else {
+            alert('😢 金币不够啦！ 摸摸它攒点爱吧～');
+          }
+        });
+      });
+
+      document.getElementById('feedBtn')?.addEventListener('click', ()=>{
+        if (state.foodInventory.length > 0) {
+          state.foodInventory.pop();
+          state.hunger = Math.min(100, state.hunger + 15);
+          state.happiness = Math.min(100, state.happiness + 5);
+          alert('🍽️ 喂食成功！ 小家伙吃饱了～');
+          render();
+        } else {
+          alert('🥺 没有食物了，去小卖部买点吧！');
+        }
+      });
+
+      document.getElementById('petBtn')?.addEventListener('click', ()=>{
+        state.happiness = Math.min(100, state.happiness + 12);
+        state.hunger = Math.max(0, state.hunger - 4);
+        alert('🤚 你轻轻摸了摸它，它呼噜呼噜～');
+        render();
+      });
+
+      document.getElementById('exitBtn')?.addEventListener('click', ()=>{
+        if (confirm('真的要退出吗？小宠会想你的 🥺')) {
+          state.step = 'invite';
+          state.selectedPetId = null;
+          state.showShop = false;
+          render();
+        }
+      });
+
+      // 小纸条toggle
+      document.querySelectorAll('.letter-badge').forEach(el => {
+        el.addEventListener('click', function() {
+          const idx = parseInt(this.dataset.letteridx);
+          state.showLetter = (state.showLetter === idx) ? null : idx;
+          render();
+        });
+      });
+    }
+
+    // 初始渲染
+    render();
+  })();
+</script>
+</body>
+</html>
